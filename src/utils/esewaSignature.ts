@@ -28,8 +28,8 @@ export const generateEsewaSignature = (
 
 export const generateTransactionUUID = (): string => {
   const timestamp = Date.now();
-  const random = Math.floor(Math.random() * 1000);
-  return `${timestamp}-${random}`;
+  const random = Math.floor(Math.random() * 10000);
+  return `FM-${timestamp}-${random}`;
 };
 
 export const createEsewaPaymentData = (cartTotal: number): EsewaPaymentData => {
@@ -39,7 +39,7 @@ export const createEsewaPaymentData = (cartTotal: number): EsewaPaymentData => {
   const product_delivery_charge = 0;
   const total_amount = amount + tax_amount + product_service_charge + product_delivery_charge;
   const transaction_uuid = generateTransactionUUID();
-  const product_code = 'EPAYTEST'; // Use test product code
+  const product_code = 'EPAYTEST'; // Use test product code for UAT
   
   const success_url = `${window.location.origin}/payment/success`;
   const failure_url = `${window.location.origin}/payment/failure`;
@@ -55,4 +55,22 @@ export const createEsewaPaymentData = (cartTotal: number): EsewaPaymentData => {
     success_url,
     failure_url
   };
+};
+
+// Verify eSewa response signature
+export const verifyEsewaResponse = (responseData: any): boolean => {
+  try {
+    const { transaction_code, status, total_amount, transaction_uuid, product_code, signature } = responseData;
+    
+    const message = `transaction_code=${transaction_code},status=${status},total_amount=${total_amount},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
+    const secret_key = '8gBm/:&EnhH.1/q';
+    
+    const hash = CryptoJS.HmacSHA256(message, secret_key);
+    const expectedSignature = CryptoJS.enc.Base64.stringify(hash);
+    
+    return expectedSignature === signature;
+  } catch (error) {
+    console.error('Error verifying eSewa response:', error);
+    return false;
+  }
 };
