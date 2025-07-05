@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CreditCard, Smartphone, Building, Wallet } from 'lucide-react';
+import { X, CreditCard, Smartphone, Building, Wallet, AlertTriangle } from 'lucide-react';
 import EsewaPayment from './EsewaPayment';
 
 interface PaymentModalProps {
@@ -14,16 +14,65 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
   const [showEsewaPayment, setShowEsewaPayment] = useState(false);
 
   const onlinePaymentMethods = [
-    { id: 'esewa', name: 'eSewa', icon: <Wallet className="w-6 h-6" />, color: 'bg-green-600' },
-    { id: 'khalti', name: 'Khalti', icon: <Smartphone className="w-6 h-6" />, color: 'bg-purple-600' },
-    { id: 'connectips', name: 'ConnectIPS', icon: <CreditCard className="w-6 h-6" />, color: 'bg-blue-600' },
-    { id: 'imepay', name: 'IME Pay', icon: <Smartphone className="w-6 h-6" />, color: 'bg-red-600' }
+    { 
+      id: 'esewa', 
+      name: 'eSewa', 
+      icon: <Wallet className="w-6 h-6" />, 
+      color: 'bg-green-600',
+      status: 'available',
+      note: 'Secure digital wallet payment'
+    },
+    { 
+      id: 'khalti', 
+      name: 'Khalti', 
+      icon: <Smartphone className="w-6 h-6" />, 
+      color: 'bg-purple-600',
+      status: 'coming-soon',
+      note: 'Digital payment solution'
+    },
+    { 
+      id: 'connectips', 
+      name: 'ConnectIPS', 
+      icon: <CreditCard className="w-6 h-6" />, 
+      color: 'bg-blue-600',
+      status: 'coming-soon',
+      note: 'Bank card payment gateway'
+    },
+    { 
+      id: 'imepay', 
+      name: 'IME Pay', 
+      icon: <Smartphone className="w-6 h-6" />, 
+      color: 'bg-red-600',
+      status: 'coming-soon',
+      note: 'Mobile payment service'
+    }
   ];
 
   const otherPaymentMethods = [
-    { id: 'fonepay', name: 'FonePay', icon: <Smartphone className="w-6 h-6" />, color: 'bg-orange-600' },
-    { id: 'bank-transfer', name: 'Bank Transfer', icon: <Building className="w-6 h-6" />, color: 'bg-gray-600' },
-    { id: 'other', name: 'Other', icon: <CreditCard className="w-6 h-6" />, color: 'bg-gray-500' }
+    { 
+      id: 'fonepay', 
+      name: 'FonePay', 
+      icon: <Smartphone className="w-6 h-6" />, 
+      color: 'bg-orange-600',
+      status: 'coming-soon',
+      note: 'Mobile banking solution'
+    },
+    { 
+      id: 'bank-transfer', 
+      name: 'Bank Transfer', 
+      icon: <Building className="w-6 h-6" />, 
+      color: 'bg-gray-600',
+      status: 'coming-soon',
+      note: 'Direct bank account transfer'
+    },
+    { 
+      id: 'other', 
+      name: 'Cash on Delivery', 
+      icon: <CreditCard className="w-6 h-6" />, 
+      color: 'bg-gray-500',
+      status: 'coming-soon',
+      note: 'Pay when you receive'
+    }
   ];
 
   const handlePayment = () => {
@@ -36,7 +85,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
       setShowEsewaPayment(true);
     } else {
       // For other payment methods, show coming soon message
-      alert(`${selectedMethod} integration coming soon! Please use eSewa for now.`);
+      alert(`${selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1)} integration coming soon! Please use eSewa for now.`);
     }
   };
 
@@ -47,10 +96,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
       <div className="fixed inset-0 z-50 bg-white">
         <EsewaPayment
           amount={total}
-          onSuccess={onPaymentComplete}
+          onSuccess={() => {
+            setShowEsewaPayment(false);
+            onPaymentComplete();
+          }}
           onFailure={() => {
             setShowEsewaPayment(false);
-            alert('Payment failed. Please try again.');
+            alert('Payment cancelled. Please try again.');
           }}
         />
       </div>
@@ -84,6 +136,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
               <p className="text-3xl font-bold text-amber-900">Rs {total.toFixed(2)}</p>
             </div>
 
+            {/* Connection Notice */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <AlertTriangle className="text-blue-600 mr-2 mt-0.5" size={16} />
+                <div className="text-sm">
+                  <p className="text-blue-800 font-medium mb-1">Payment Gateway Notice</p>
+                  <p className="text-blue-700">
+                    If automatic redirect fails, manual payment options will be provided.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Step 1 */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -107,7 +172,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
                       selectedMethod === method.id
                         ? 'border-amber-500 bg-amber-50'
                         : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    } ${method.status === 'coming-soon' ? 'opacity-75' : ''}`}
                   >
                     <input
                       type="radio"
@@ -116,18 +181,26 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
                       checked={selectedMethod === method.id}
                       onChange={(e) => setSelectedMethod(e.target.value)}
                       className="sr-only"
+                      disabled={method.status === 'coming-soon'}
                     />
                     <div className={`${method.color} text-white p-2 rounded-lg mr-3`}>
                       {method.icon}
                     </div>
                     <div className="flex-1">
-                      <span className="font-medium text-gray-900">{method.name}</span>
-                      {method.id === 'esewa' && (
-                        <div className="text-xs text-green-600 font-medium">✓ Available</div>
-                      )}
-                      {method.id !== 'esewa' && (
-                        <div className="text-xs text-gray-500">Coming Soon</div>
-                      )}
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-gray-900">{method.name}</span>
+                        {method.status === 'available' && (
+                          <div className="text-xs text-green-600 font-medium bg-green-100 px-2 py-1 rounded">
+                            ✓ Available
+                          </div>
+                        )}
+                        {method.status === 'coming-soon' && (
+                          <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            Coming Soon
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600">{method.note}</p>
                     </div>
                     <div className={`ml-auto w-4 h-4 rounded-full border-2 ${
                       selectedMethod === method.id
@@ -152,7 +225,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
                 {otherPaymentMethods.map((method) => (
                   <label
                     key={method.id}
-                    className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                    className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 opacity-75 ${
                       selectedMethod === method.id
                         ? 'border-amber-500 bg-amber-50'
                         : 'border-gray-200 hover:border-gray-300'
@@ -165,13 +238,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
                       checked={selectedMethod === method.id}
                       onChange={(e) => setSelectedMethod(e.target.value)}
                       className="sr-only"
+                      disabled={true}
                     />
                     <div className={`${method.color} text-white p-2 rounded-lg mr-3`}>
                       {method.icon}
                     </div>
                     <div className="flex-1">
-                      <span className="font-medium text-gray-900">{method.name}</span>
-                      <div className="text-xs text-gray-500">Coming Soon</div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-gray-900">{method.name}</span>
+                        <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          Coming Soon
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-600">{method.note}</p>
                     </div>
                     <div className={`ml-auto w-4 h-4 rounded-full border-2 ${
                       selectedMethod === method.id
@@ -190,17 +269,18 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
             {/* Payment Button */}
             <button
               onClick={handlePayment}
-              disabled={!selectedMethod}
+              disabled={!selectedMethod || selectedMethod !== 'esewa'}
               className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-gray-400 text-white py-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 disabled:transform-none"
             >
-              {selectedMethod === 'esewa' ? `Pay with eSewa - Rs ${total.toFixed(2)}` : `Pay Rs ${total.toFixed(2)}`}
+              {selectedMethod === 'esewa' ? `Pay with eSewa - Rs ${total.toFixed(2)}` : 
+               selectedMethod ? 'Coming Soon' : `Select Payment Method`}
             </button>
 
             <div className="text-xs text-gray-500 text-center space-y-1">
               <p>Your payment is secured with industry-standard encryption</p>
               {selectedMethod === 'esewa' && (
                 <p className="text-green-600 font-medium">
-                  ✓ eSewa integration active - You will be redirected to eSewa for secure payment
+                  ✓ eSewa integration active - Secure payment gateway
                 </p>
               )}
             </div>
