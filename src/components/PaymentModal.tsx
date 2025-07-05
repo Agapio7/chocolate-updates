@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, CreditCard, Smartphone, Building, Wallet } from 'lucide-react';
+import EsewaPayment from './EsewaPayment';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -10,7 +11,7 @@ interface PaymentModalProps {
 
 const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onPaymentComplete }) => {
   const [selectedMethod, setSelectedMethod] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [showEsewaPayment, setShowEsewaPayment] = useState(false);
 
   const onlinePaymentMethods = [
     { id: 'esewa', name: 'eSewa', icon: <Wallet className="w-6 h-6" />, color: 'bg-green-600' },
@@ -31,17 +32,30 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
       return;
     }
 
-    setIsProcessing(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      onPaymentComplete();
-      onClose();
-    }, 3000);
+    if (selectedMethod === 'esewa') {
+      setShowEsewaPayment(true);
+    } else {
+      // For other payment methods, show coming soon message
+      alert(`${selectedMethod} integration coming soon! Please use eSewa for now.`);
+    }
   };
 
   if (!isOpen) return null;
+
+  if (showEsewaPayment) {
+    return (
+      <div className="fixed inset-0 z-50 bg-white">
+        <EsewaPayment
+          amount={total}
+          onSuccess={onPaymentComplete}
+          onFailure={() => {
+            setShowEsewaPayment(false);
+            alert('Payment failed. Please try again.');
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -106,7 +120,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
                     <div className={`${method.color} text-white p-2 rounded-lg mr-3`}>
                       {method.icon}
                     </div>
-                    <span className="font-medium text-gray-900">{method.name}</span>
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-900">{method.name}</span>
+                      {method.id === 'esewa' && (
+                        <div className="text-xs text-green-600 font-medium">✓ Available</div>
+                      )}
+                      {method.id !== 'esewa' && (
+                        <div className="text-xs text-gray-500">Coming Soon</div>
+                      )}
+                    </div>
                     <div className={`ml-auto w-4 h-4 rounded-full border-2 ${
                       selectedMethod === method.id
                         ? 'border-amber-500 bg-amber-500'
@@ -147,7 +169,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
                     <div className={`${method.color} text-white p-2 rounded-lg mr-3`}>
                       {method.icon}
                     </div>
-                    <span className="font-medium text-gray-900">{method.name}</span>
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-900">{method.name}</span>
+                      <div className="text-xs text-gray-500">Coming Soon</div>
+                    </div>
                     <div className={`ml-auto w-4 h-4 rounded-full border-2 ${
                       selectedMethod === method.id
                         ? 'border-amber-500 bg-amber-500'
@@ -165,15 +190,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total, onP
             {/* Payment Button */}
             <button
               onClick={handlePayment}
-              disabled={!selectedMethod || isProcessing}
+              disabled={!selectedMethod}
               className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-gray-400 text-white py-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 disabled:transform-none"
             >
-              {isProcessing ? 'Processing Payment...' : `Pay Rs ${total.toFixed(2)}`}
+              {selectedMethod === 'esewa' ? `Pay with eSewa - Rs ${total.toFixed(2)}` : `Pay Rs ${total.toFixed(2)}`}
             </button>
 
-            <p className="text-xs text-gray-500 text-center">
-              Your payment is secured with industry-standard encryption
-            </p>
+            <div className="text-xs text-gray-500 text-center space-y-1">
+              <p>Your payment is secured with industry-standard encryption</p>
+              {selectedMethod === 'esewa' && (
+                <p className="text-green-600 font-medium">
+                  ✓ eSewa integration active - You will be redirected to eSewa for secure payment
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
